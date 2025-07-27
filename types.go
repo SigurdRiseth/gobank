@@ -5,13 +5,18 @@ import (
 	"time"
 )
 
+type TransferRequest struct {
+	ToAccount int `json:"to_account"`
+	Amount    int `json:"amount"`
+}
+
 type Account struct {
-	ID        int     `json:"id"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
-	Number    int64   `json:"number"`
-	Email     string  `json:"email"`
-	Balance   float64 `json:"balance"`
+	ID        int       `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Number    int64     `json:"number"`
+	Email     string    `json:"email"`
+	Balance   float64   `json:"balance"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -28,6 +33,6 @@ func NewAccount(firstName, lastName, email string) *Account {
 
 type CreateAccountRequest struct {
 	FirstName string `json:"first_name"`
-	LastName string `json:"last_name"`
-	Email string `json:"email"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }
