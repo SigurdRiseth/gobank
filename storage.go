@@ -60,12 +60,12 @@ func (s *PostgresStore) CreateAccount(acc *Account) error {
 	values($1, $2, $3, $4, $5, $6)`
 
 	resp, err := s.db.Query(
-		query, 
-		acc.FirstName, 
-		acc.LastName, 
-		acc.Number, 
-		acc.Balance, 
-		acc.CreatedAt, 
+		query,
+		acc.FirstName,
+		acc.LastName,
+		acc.Number,
+		acc.Balance,
+		acc.CreatedAt,
 		acc.Email,
 	)
 

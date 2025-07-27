@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
 
@@ -158,16 +159,34 @@ func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error
 	return WriteJSON(w, http.StatusOK, transferReq)
 }
 
+func permissionDenied(w http.ResponseWriter) {
+	WriteJSON(w, http.StatusForbidden, apiError{Error: "permission denied"})
+}
+
 func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("x-jwt-token")
+		authHeader := r.Header.Get("Authorization")
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		_, err := validateJWT(tokenString)
+		token, err := validateJWT(tokenString)
 		if err != nil {
-			WriteJSON(w, http.StatusForbidden, apiError{Error: "invalid token"})
+			log.Println("JWT validation error:", err)
+			permissionDenied(w)
+			return
+		}
+		if !token.Valid {
+			log.Println("Invalid JWT token")
+			permissionDenied(w)
 			return
 		}
 
+		claims, ok := token.Claims.(jwt.MapClaims)
+		fmt.Printf("Claims: %v\n", claims)
+		if !ok {
+			log.Println("Invalid JWT claims")
+			permissionDenied(w)
+			return
+		}
 		handlerFunc(w, r)
 	}
 }
@@ -175,7 +194,7 @@ func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 func validateJWT(tokenString string) (*jwt.Token, error) {
 	secret := os.Getenv("JWT_SECRET")
 
-	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	return jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
