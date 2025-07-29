@@ -1,9 +1,13 @@
 package main
 
-import "log"
+import (
+	"log"
+
+	"github.com/sigurdriseth/gobank/db"
+)
 
 func main() {
-	store, err := NewPostgresStore()
+	store, err := db.NewPostgresStore()
 	if err != nil {
 		log.Fatal(err)
 	}

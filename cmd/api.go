@@ -12,6 +12,8 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+	"github.com/sigurdriseth/gobank/db"
+	"github.com/sigurdriseth/gobank/types"
 )
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
@@ -36,10 +38,10 @@ func makeHTTPHandleFunc(f apiFunction) http.HandlerFunc {
 
 type APIServer struct {
 	listenAddr string
-	store      Storage
+	store      db.Storage
 }
 
-func NewAPIServer(listenAddr string, store Storage) *APIServer {
+func NewAPIServer(listenAddr string, store db.Storage) *APIServer {
 	return &APIServer{
 		listenAddr: listenAddr,
 		store:      store,
@@ -115,13 +117,13 @@ func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
-	createAccountRequest := new(CreateAccountRequest)
+	createAccountRequest := new(types.CreateAccountRequest)
 	if err := json.NewDecoder(r.Body).Decode(createAccountRequest); err != nil {
 		return err
 	}
 	defer r.Body.Close()
 
-	account := NewAccount(createAccountRequest.FirstName, createAccountRequest.LastName, createAccountRequest.Email)
+	account := types.NewAccount(createAccountRequest.FirstName, createAccountRequest.LastName, createAccountRequest.Email)
 	if err := s.store.CreateAccount(account); err != nil {
 		return err
 	}
@@ -150,7 +152,7 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
-	transferReq := new(TransferRequest)
+	transferReq := new(types.TransferRequest)
 	if err := json.NewDecoder(r.Body).Decode(transferReq); err != nil {
 		return err
 	}
@@ -202,7 +204,7 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 	})
 }
 
-func createJWT(account *Account) (string, error) {
+func createJWT(account *types.Account) (string, error) {
 	claims := &jwt.RegisteredClaims{
 		Issuer:    "banking-api",
 		Subject:   strconv.Itoa(account.ID),
